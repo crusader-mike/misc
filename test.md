@@ -1,6 +1,9 @@
 Document number: TBD (Dnnnn=yy-nnnn)
+
 Date: 2017-08-21
+
 Reply-to: Michael Kilburn <crusader.mike at gmail dot com>
+
 
 # 1. Introduction
 Memory for exception object is allocated in an 'unspecified way' (18.1/4). This makes it impossible for application to handle such allocation failures. If implementation uses dynamic storage for exception this means impossibility to write code that reliably handles *out-of-memory* condition.
@@ -11,7 +14,7 @@ This proposal aims to fix it by specifying behavior in such case.
 Code that uses C-style error handling can be written to handle out-of-memory (OOM) reliably. It can't be done if code uses exceptions. This is a problem if you are writing a program designed to survive OOMs.
 
 # 3. Impact On the Standard
-Proposal will introduce a change to exception handling mechanism by specifying behavior under no-memory condition.
+Proposal introduces a change to exception handling mechanism by specifying behavior under no-memory condition.
 
 # 4. Problem
 Consider this snippet in context of typical stack-based implementation:
