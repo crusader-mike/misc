@@ -61,13 +61,13 @@ Using std::bad_alloc means stdlib doesn't need to be changed to accomodate new e
 
 With GCC (which uses Itanium C++ ABI), no-fault *throw XX* should be possible -- for example by passing NULL into *\_\_cxa_throw()* and coding internals accordingly.
 
-## 5.2 Ability to detect 'out of exception storage' condition
+### 5.2 Ability to detect 'out of exception storage' condition
 Implementation must be able to detect allocation failure. It is expected that it shouldn't be a problem (certainly not for GCC), but if it is (for example if exception gets allocated on stack with unknown size) -- this proposal may need an update.
 
-## 5.3 std::current_exception()
+### 5.3 std::current_exception()
 *std::current_exception()* is declared *noexcept* and returns (equivalent of) NULL pointer if no exception is being handled right now. In some implementations it makes a copy of exception object, which can throw and fail to allocate memory for exception -- in this case returned *exception_ptr* should represent *XX* (probably a pointer to statically allocated object or magical value recognized by *rethrow_exception()*/etc)
 
-## 5.4 Existing code
+### 5.4 Existing code
 Only very small portion of existing code can be expected to "break" -- in a sense that unspecified behaviour of an extremely rare situation will get replaced with defined (but somewhat surprising) behavior. Majority of code is written to handle exceptions *in general* and will not need to be changed. Also, typically user exceptions have throwing copy constructors and it is expected that *throw MyException(...)* can throw *std::bad_alloc*.
 
 ### 5.5 General thoughts on implementations
