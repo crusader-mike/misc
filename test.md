@@ -59,7 +59,7 @@ Using std::bad_alloc means stdlib doesn't need to be changed to accomodate new e
 
 (Regardless of choice made wrt std::bad_alloc) *XX* support should be built in such way that throwing it does not consume storage used for normal exception mechanisms. If it is impossible to implement -- this proposal can be disregarded.
 
-With GCC (which uses Itanium C++ ABI), no-fault *throw XX* should be possible -- for example by passing NULL into \_\_cxa_throw() and coding internals accordingly. With MSVC (which allocates exceptions on stack) it is unknown.
+With GCC (which uses Itanium C++ ABI), no-fault *throw XX* should be possible -- for example by passing NULL into *\_\_cxa_throw()* and coding internals accordingly. With MSVC (which allocates exceptions on stack) it is unknown.
 
 ## 5.2 Ability to detect 'out of exception storage' condition
 Implementation must be able to detect allocation failure. It is expected that it shouldn't be a problem (certainly not for GCC), but if it is (for example if exception gets allocated on stack with unknown size) -- this proposal may need an update.
