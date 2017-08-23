@@ -9,7 +9,7 @@ Reply-to: Michael Kilburn <crusader.mike at gmail dot com>
 ## 1. Introduction (and motivation)
 Memory for exception object is allocated in an 'unspecified way' (18.1/4). This makes it impossible for application to handle such allocation failures. If implementation uses dynamic storage for exception this makes it impossible to write code that reliably handles lack of space in dynamic storage (aka *out-of-memory* (OOM)).
 
-On the other hand code that uses C-style error handling doesn't have this issue. This proposal aims to restore the balance by mandating certain behavior in case of exception allocation failure and providing tools to handle it.
+On the other hand code that uses C-style error handling doesn't have this issue. This proposal aims to "close the gap" by mandating certain behavior in case of exception allocation failure and providing tools to handle it.
 
 ## 3. Impact On the Standard
 Failure to allocate memory for exception being thrown will have a well-defined behavior.
