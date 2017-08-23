@@ -1,22 +1,20 @@
-Document number: TBD (Dnnnn=yy-nnnn)
+Document number: D0770R0
 
 Date: 2017-08-21
 
 Reply-to: Michael Kilburn <crusader.mike at gmail dot com>
 
+# A Proposal to Specify Behavior in Case of Exception Allocation Failure
 
-# 1. Introduction
-Memory for exception object is allocated in an 'unspecified way' (18.1/4). This makes it impossible for application to handle such allocation failures. If implementation uses dynamic storage for exception this means impossibility to write code that reliably handles *out-of-memory* condition.
+## 1. Introduction (and motivation)
+Memory for exception object is allocated in an 'unspecified way' (18.1/4). This makes it impossible for application to handle such allocation failures. If implementation uses dynamic storage for exception this makes it impossible to write code that reliably handles lack of space in dynamic storage (aka *out-of-memory* (OOM)).
 
-This proposal aims to fix it by specifying behavior in such case.
+On the other hand code that uses C-style error handling doesn't have this issue. This proposal aims to restore the balance by mandating certain behavior in case of exception allocation failure and providing tools to handle it.
 
-# 2. Motivation
-Code that uses C-style error handling can be written to handle out-of-memory (OOM) reliably. It can't be done if code uses exceptions. This is a problem if you are writing a program designed to survive OOMs.
+## 3. Impact On the Standard
+Failure to allocate memory for exception being thrown will have a well-defined behavior.
 
-# 3. Impact On the Standard
-Proposal introduces a change to exception handling mechanism by specifying behavior under no-memory condition.
-
-# 4. Problem
+## 4. Problem
 Consider this snippet in context of typical stack-based implementation:
 ```c
 int foo() { return -1; }
@@ -42,30 +40,43 @@ Second snippet can have three outcomes:
 - exception object (-1) is successfully constructed and thrown
 - **unspecified** if memory allocation for exception object fails, no way to handle something unspecified in the code
 
-With GCC (which allocates exceptions in heap and calls *std::terminate()* on failure) this means you can't write code that reliably survives OOM. It is understandable why GCC chose *std::terminate()* (over throwing *std::bad_alloc*, for example) -- no one expects `throw -1` to throw something else instead.
+With GCC (which allocates exceptions in dynamic storage and calls *std::terminate()* on failure) this means you can't write code that reliably survives OOM. It is understandable why GCC chose *std::terminate()* (over throwing *std::bad_alloc*, for example) -- no one expects `throw -1` to throw something else instead.
 
 Note that fundamentally these two snippets do the same thing -- construct error object and pass it to caller. The important difference that in first one object memory is already preallocated by caller and in second one -- it gets allocated by callee when it is time to throw.
 
-# 5. Solution
+## 5. Solution
 In short:
-* an exception *XX* (eXceptional eXception) that is guaranteed to be thrown without fail
+* introduce new exception *XX* (eXceptional eXception) that is guaranteed to be thrown without fail (or reuse *std::bad_alloc*)
 * change 18.1/4 to mandate that `throw ABC` will throw *XX* if runtime can't allocate memory for *ABC*
 * (optional) clarify 21.8.6/8 -- mention that *XX* can be thrown if memory for *std::bad_exception* can't be allocated
 
-## 5.1 New exception
-*std::bad_alloc* can be reused for *XX*, but it may be useful to distinguish between running out of dynamic storage and running out of exception storage. To facilitate that *std::bad_alloc* can be extended with additional member variable that specifies storage we ran out of.
+Subsequent sections describe "problem points" discovered so far.
 
-(Regardless of choice made wrt std::bad_alloc) *XX* support should be built in such way that throwing it does not consume storage used for normal exception mechanisms. Effectively we need to pass a simple 'no space in exception storage' flag to exception handling mechanism. For example it could be done by passing NULL instead of exception object pointer (under the hood).
+### 5.1 New exception
+It is better to (re)use *std::bad_alloc* for *XX*. But it may be useful to distinguish between running out of dynamic storage and running out of "exception storage" -- if it is important *std::bad_alloc* can be extended with additional member variable that specifies storage we ran out of.
 
-Implementation of *std::current_exception()* might be tricky as NULL value is already used in 'no exception being handled' case.
+Using std::bad_alloc means stdlib doesn't need to be changed to accomodate new exception.
 
-## 5.2 Thoughts on implementations
-Implementations using heap for exceptions (like GCC) should not have any problems.
+(Regardless of choice made wrt std::bad_alloc) *XX* support should be built in such way that throwing it does not consume storage used for normal exception mechanisms. If it is impossible to implement -- this proposal can be disregarded.
+
+With GCC (which uses Itanium C++ ABI), no-fault *throw XX* should be possible -- for example by passing NULL into \_\_cxa_throw() and coding internals accordingly. With MSVC (which allocates exceptions on stack) it is unknown.
+
+## 5.2 Ability to detect 'out of exception storage' condition
+Implementation must be able to detect allocation failure. It is expected that it shouldn't be a problem (certainly not for GCC), but if it is (for example if exception gets allocated on stack with unknown size) -- this proposal may need an update.
+
+## 5.3 std::current_exception()
+*std::current_exception()* is declared *noexcept* and returns (equivalent of) NULL pointer if no exception is being handled right now. In some implementations it makes a copy of exception object, which can throw and fail to allocate memory for exception -- in this case returned *exception_ptr* should represent *XX* (probably statically allocated or magical value recognized by *rethrow_exception()*/etc)
+
+## 5.4 Existing code
+Only very small portion of existing code can be expected to "break" -- in a sense that unspecified behaviour of an extremely rare situation will get replaced with defined (but somewhat surprising) behavior. Majority of code is written to handle exceptions *in general* and will not need to be changed. Also, typically user exceptions have throwing copy constructors and it is expected that *throw MyException(...)* can throw *std::bad_alloc*.
+
+### 5.5 General thoughts on implementations
+Implementations using dynamic storage for exceptions (like GCC) should not have any problems.
 
 Implementations that use call stack as exception storage (like MSVC) could be considered problematic since C++ traditionally doesn't provide means of handling out-of-stack condition (probably because this will make impossible to create *no-fail* functions). My belief that it shouldn't be a game changer since at time of allocation implementation should know how much stack has been left and should be able to check it.
 
-Implementation can also use a separate stack for exceptions -- to be created on first throw (in current thread) with every allocation checked against remaining free space.
+Implementation can also use a separate stack for exceptions -- to be created on first throw (in current thread) with every allocation checked against remaining free space. This will allow stack unwinding to work very similar to C-style error propagation -- by dropping stack frames one-by-one as unwinding makes progress (thus making it available to be used for calling destructors).
 
-# 6. Proposed Text
+## 6. Proposed Text
 TBD
 
