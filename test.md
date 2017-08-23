@@ -46,7 +46,7 @@ Note that fundamentally these two snippets do the same thing -- construct error 
 
 ## 5. Solution
 In short:
-* introduce new exception *XX* (eXceptional eXception) that is guaranteed to be thrown without fail (or reuse *std::bad_alloc*)
+* introduce new exception *XX* (eXceptional eXception) that is guaranteed to be thrown without fail
 * change 18.1/4 to mandate that `throw ABC` will throw *XX* if runtime can't allocate memory for *ABC*
 * (optional) clarify 21.8.6/8 -- mention that *XX* can be thrown if memory for *std::bad_exception* can't be allocated
 
