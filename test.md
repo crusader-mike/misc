@@ -53,7 +53,7 @@ In short:
 Subsequent sections describe "problem points" discovered so far.
 
 ### 5.1 New exception
-It is better to (re)use *std::bad_alloc* for *XX*. But it may be useful to distinguish between running out of dynamic storage and running out of "exception storage" -- if it is important *std::bad_alloc* can be extended with additional member variable that specifies storage we ran out of.
+It is better to (re)use *std::bad_alloc* for *XX*. But it may be useful to distinguish between running out of dynamic storage and running out of "exception storage" -- if it is important, *std::bad_alloc* can be extended with additional member variable that specifies storage we ran out of.
 
 Using std::bad_alloc means stdlib doesn't need to be changed to accomodate new exception.
 
